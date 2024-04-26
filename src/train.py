@@ -183,6 +183,7 @@ def _prepare_training(instance: BenchmarkInstance):
     print_stage("Preprocess data")
     prepare_fn = get_prepare_fn(tokenizer, task_type, label_col, text_cols)
     train_dataset = data["train"].map(prepare_fn, batched=True, remove_columns=data["train"].column_names)
+    train_dataset = train_dataset.select(range(500))
     if "validation" in data:
         prepare_eval_fn = get_prepare_fn(tokenizer, task_type, label_col, text_cols)
         valid_dataset = data["validation"].map(prepare_eval_fn,
@@ -310,8 +311,9 @@ def train_retrieval(instance: BenchmarkInstance, training_args: TrainingArgument
 
     print_stage("Preparing data")
     data_map = partial(get_prepare_fn, tokenizer, "sentence-retrieval", label_col)
-    train_X_data = data["train"].map(data_map(text_cols[0]), batched=True, remove_columns=data["train"].column_names)
-    train_Y_data = data["train"].map(data_map(text_cols[1]), batched=True, remove_columns=data["train"].column_names)
+    train_subset = data["train"].select(range(500))
+    train_X_data = train_subset.map(data_map(text_cols[0]), batched=True, remove_columns=data["train"].column_names)
+    train_Y_data = train_subset.map(data_map(text_cols[1]), batched=True, remove_columns=data["train"].column_names)
     train_labels = train_X_data["labels"]
     assert isinstance(train_labels, list)
 
